@@ -62,6 +62,16 @@ def live_india_states():
 def live_india_disticts():
     iapi = pd.read_csv("https://api.covid19india.org/csv/latest/districts.csv")
     return iapi
+    
+@st.cache(ttl = 60*5, max_entries = 20)
+def state_timeline_data():
+    iapi = pd.read_csv("https://api.covid19india.org/csv/latest/state_wise_daily.csv")
+    return iapi
+
+@st.cache(ttl = 60*5, max_entries = 20)
+def india_timeline_data():
+    iapi = pd.read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv")
+    return iapi
 
 def plot_bargraph(data):
     fig = px.bar(data.transpose(), x = 'Cases', y = data.transpose().index , color = 'Cases',
@@ -100,10 +110,54 @@ def stack_bar(data1, data2):
     st.write(fig)
 
 
+def timeline_state_chart(data):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=data[data.columns[0]], y=data[data.columns[1]], name = 'Confirmed Cases', marker_color = 'indianred'))
+    fig.add_trace(go.Scatter(x=data[data.columns[0]], y=data[data.columns[2]], name = 'Recovered Cases', marker_color = 'blue'))
+    fig.add_trace(go.Scatter(x=data[data.columns[0]], y=data[data.columns[3]], name = 'Deceased Cases', marker_color = 'yellow'))
+    fig.update_layout(title_text="TimeLine of Covid-19 Cases", xaxis_title = 'Date', yaxis_title = 'Cases')
+    st.write(fig)
 
+# entire_data = load_data()
 
-
-entire_data = load_data()
+state_codes = {
+    'Andaman and Nicobar Islands':'AN',
+    'Andhra Pradesh	': 'AP',
+    'Arunachal Pradesh': 'AR',
+    'Assam':'AS',
+    'Bihar':'BR',
+    'Chandigarh':'CH',
+    'Chhattisgarh':'CT',
+    'Dadra and Nagar Haveli':'DN',
+    'Daman and Diu':'DD',
+    'Delhi':'DL',
+    'Goa':'GA',
+    'Gujarat':'GJ',
+    'Haryana':'HR',
+    'Himachal Pradesh': 'HP',
+    'Jammu and Kashmir':'JK',
+    'Jharkhand':'JH',
+    'Karnataka':'KA',
+    'Kerala': 'KL',
+    'Lakshadweep':'LD',
+    'Madhya Pradesh':'MP',
+    'Maharashtra':'MH',
+    'Manipur':'MN',
+    'Meghalaya':'ML',
+    'Mizoram':'MZ',
+    'Nagaland':'NL',
+    'Odisha':'OR',
+    'Puducherry':'PY',
+    'Punjab':'PB',
+    'Rajasthan':'RJ',
+    'Sikkim':'SK',
+    'Tamil Nadu':'TN',
+    'Telangana':'TG',
+    'Tripura':'TR',
+    'Uttar Pradesh':'UP',
+    'Uttarakhand': 'UT',
+    'West Bengal':'WB'
+}
 
 st.markdown("<style>description {color: Green;}</style>",unsafe_allow_html = True)
 st.title("Covid-19 🌎 Tracker With Visual Analysis!")
@@ -137,12 +191,6 @@ if live_data_chxbox is True:
             as_list[0] = 'Cases'
             total_result.index = as_list
             st.write(total_result)
-            # total_graph = st.checkbox("Show Graph", False)
-            # if total_graph is True:
-                # plot_multiple_scatter(total_result)
-
-            # st.sidebar.markdown("---")
-
             st.markdown("### Today's Live Confirmed, Recovered & Deceased Cases in India")
             st.markdown("The tables give you the break up of all cases Today in India including Total Recovered, Deaths, Confirmed & Tested")
             yest = pd.to_datetime(india_states['Date'].max())
@@ -156,14 +204,11 @@ if live_data_chxbox is True:
             st.write(today_stats)
             daily_graph = st.checkbox("Show Graph", False, key = 4)
             if daily_graph is True:
-                # plot_bargraph(today_stats)
                 overall_viz = st.selectbox("Choose a type of visualization: ", ['Bar Chart', 'Line Chart'])
                 if overall_viz == 'Bar Chart':
                     stack_bar(total_result, today_stats)
                 else:
                     plot_multiple_scatter(total_result, today_stats)
-
-            # st.sidebar.markdown("---")
 
             st.markdown("### Covid 19 Live State wise breakup")
             st.markdown("The following table gives you a real-time analysis of the confirmed, recovered and deceased cases of each Indian state")
@@ -173,6 +218,8 @@ if live_data_chxbox is True:
             st.write(india_state_data[['State','Confirmed','Recovered','Deceased','Tested']])
             st.markdown("---")
             st.sidebar.markdown("---")
+            india_timeline = india_timeline_data()
+            timeline_state_chart(india_timeline[['Date','Daily Confirmed', 'Daily Recovered', 'Daily Deceased']])
 
         statewise = st.sidebar.checkbox("Show State Wise Analysis", False)
         if statewise is True:
@@ -186,28 +233,43 @@ if live_data_chxbox is True:
             as_list[0] = 'Cases'
             state_total.index = as_list
             st.write(state_total)
-            total_graph = st.checkbox("Show Graph", False)
+            yest = pd.to_datetime(india_states['Date'].max())
+            t =datetime.strftime(yest - timedelta(1), '%Y-%m-%d')
+            state_yesterday_data = (india_states[['Confirmed', 'Recovered', 'Deceased']].loc[(india_states['Date'] == t) & (india_states['State'] == state) ])
+            today_state_stats = state_total - state_yesterday_data.values
+            today_state_stats.columns.name = 'Status'
+            as_list = today_state_stats.index.to_list()
+            as_list[0] = 'Cases'
+            today_state_stats.index = as_list
+            st.write(today_state_stats)
+            total_graph = st.checkbox("Show Graph", False, key = 5)
             if total_graph is True:
-                plot_bargraph(state_total)
+                state_viz_selection = st.selectbox("Choose a type of visualization: ", ['Bar Chart', 'Line Chart'], key = 6)
+                if state_viz_selection == 'Bar Chart':
+                   stack_bar(state_total, today_state_stats)
+                else:
+                    plot_multiple_scatter(state_total, today_state_stats)
 
-
-
+            st.markdown("### Overall Timeline of Covid Cases in "+state+" till date")
+            st.markdown("This table gives you an understanding about the data analysis pertaining to the confirmed, recovered and deceased cases of Covid-19 in "+state+" over time.")
+            timeline_state_chart(india_states[['Date','Confirmed', 'Recovered', 'Deceased']].loc[(india_states['State'] == state)])   
         # st.sidebar.markdown("---")
 
-else:
-    choice_country = st.sidebar.checkbox("Show Country Wise Ananlysis", True)
 
-    st.sidebar.markdown("Set the state, city & other parameters to get the desired analysis.")
+# else:
+#     choice_country = st.sidebar.checkbox("Show Country Wise Ananlysis", True)
 
-    if (choice_country is True):
-        country = st.sidebar.selectbox("Select a Country:", entire_data.Country.unique()[1:])
-        covid_country_data = country_data(entire_data, country)
-        st.markdown("# **National Level Analysis**")
-        st.markdown("## Overall Confirmed, Active, Recovered and Deceased cases in "+ country +" yet")
-        st.markdown("### *This table gives you the data break-up of all confirmed, recovered, active and deceased cases that has been reported in "+ country+ " till now. The graphical representation of this tabular data insight is given right below, don’t forget to check it out.*")
-        t = covid_country_data[['Confirmed', 'Deaths', 'Recovered']].loc[(covid_country_data['Updated'] == covid_country_data['Updated'].max()) & (covid_country_data['State'].isnull()) & (covid_country_data['City'].isnull())]
-        st.write(t)
-    # , t.rename(index = {t.index: 'Cases'})
+#     st.sidebar.markdown("Set the state, city & other parameters to get the desired analysis.")
+
+#     if (choice_country is True):
+#         country = st.sidebar.selectbox("Select a Country:", entire_data.Country.unique()[1:])
+#         covid_country_data = country_data(entire_data, country)
+#         st.markdown("# **National Level Analysis**")
+#         st.markdown("## Overall Confirmed, Active, Recovered and Deceased cases in "+ country +" yet")
+#         st.markdown("### *This table gives you the data break-up of all confirmed, recovered, active and deceased cases that has been reported in "+ country+ " till now. The graphical representation of this tabular data insight is given right below, don’t forget to check it out.*")
+#         t = covid_country_data[['Confirmed', 'Deaths', 'Recovered']].loc[(covid_country_data['Updated'] == covid_country_data['Updated'].max()) & (covid_country_data['State'].isnull()) & (covid_country_data['City'].isnull())]
+#         st.write(t)
+#     # , t.rename(index = {t.index: 'Cases'})
 
 # elif (choice_result == 'Worldwide'):
 #     # covid_world_data = country_data(entire_data, 'Worldwide')
