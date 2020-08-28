@@ -10,6 +10,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import altair as alt
 from datetime import datetime, timedelta
+from plotly.subplots import make_subplots
 
 @st.cache(ttl = 3600, max_entries = 20)
 def load_data():
@@ -81,9 +82,11 @@ def plot_bargraph(data):
 def plot_multiple_scatter(data1, data2):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x= data1.columns, y= data1.loc['Cases'], name = 'Overall Stats',
-                         line=dict(color='royalblue', width=4)))
+                        marker=dict(color="crimson", size=25),
+                        mode="markers"))
     fig.add_trace(go.Scatter(x= data2.columns, y= data2.loc['Cases'], name = 'Daily Stats',
-                         line=dict(color='indianred', width=4)))
+                        marker=dict(color="royalblue", size=15),
+                        mode="markers"))
     fig.update_layout(title='Covid-19 Cases',
                    xaxis_title='Status',
                    yaxis_title='Cases')
@@ -112,12 +115,28 @@ def stack_bar(data1, data2):
 
 def timeline_state_chart(data):
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=data[data.columns[0]], y=data[data.columns[1]], name = 'Confirmed Cases', marker_color = 'indianred'))
-    fig.add_trace(go.Scatter(x=data[data.columns[0]], y=data[data.columns[2]], name = 'Recovered Cases', marker_color = 'blue'))
-    fig.add_trace(go.Scatter(x=data[data.columns[0]], y=data[data.columns[3]], name = 'Deceased Cases', marker_color = 'yellow'))
-    fig.update_layout(title_text="TimeLine of Covid-19 Cases", xaxis_title = 'Date', yaxis_title = 'Cases')
+    fig.add_trace(go.Scatter(x=data[data.columns[0]], y=data[data.columns[1]], name = 'Confirmed Cases',line=dict(color='royalblue', width=4)))
+    fig.add_trace(go.Scatter(x=data[data.columns[0]], y=data[data.columns[2]], name = 'Recovered Cases', line=dict(color='red', width=4)))
+    fig.add_trace(go.Scatter(x=data[data.columns[0]], y=data[data.columns[3]], name = 'Deceased Cases',line=dict(color='yellow', width=4)))
+    fig.update_layout(title_text="TimeLine of Covid-19 Cases", xaxis_title = 'Date', yaxis_title = 'Cases',autosize=True,
+    margin=dict(
+        autoexpand=True,
+        l=0,
+        r=0,
+        t=90,
+    ), xaxis = dict(showgrid =  False), yaxis = dict(showgrid = False))
     st.write(fig)
 
+def state_daily_timeline(data):
+    fig = px.line(data, x = 'Date', y=data[data.columns[2]], color = 'Status', line_group= 'Status', labels={ data.columns[2] : 'Number of Cases'})
+    fig.update_layout(title_text="TimeLine of Covid-19 Cases", xaxis_title = 'Date', yaxis_title = 'Cases', xaxis = dict(showgrid =  False), yaxis = dict(showgrid = False))
+    st.write(fig)
+
+ 
+def pie(data):
+    fig = px.pie(data[['Recovered','Deceased','Active']], names = data.loc[data.index.max()].index[1:], values=data[['Recovered','Deceased', 'Active']].loc[data.index.max()].values, title= "Pie Chart Break Up of Recovered, Active and Deceased Covid Cases",labels={'label':'Case Status','value':'Number of Cases'})
+    fig.update_traces(textinfo='percent+label')
+    st.write(fig)
 # entire_data = load_data()
 
 state_codes = {
@@ -185,30 +204,33 @@ if live_data_chxbox is True:
             st.markdown("## **Nation Wise Analysis**")
             st.markdown("### Overall Live Cases in India yet")
             st.markdown("The tables give you the break up of all cases in India yet including Total Recovered, Deaths, Confirmed & Tested")
-            total_result = (india_states[['Confirmed', 'Recovered', 'Deceased']].loc[(india_states['Date'] == india_states['Date'].max()) & (india_states['State'] == 'India') ])
+            total_result = (india_states.loc[(india_states['Date'] == india_states['Date'].max()) & (india_states['State'] == 'India') ])
+            total_result['Active'] = total_result['Confirmed'] - total_result['Recovered'] - total_result['Deceased'] - total_result['Other']
             total_result.columns.name = 'Status'
             as_list = total_result.index.to_list()
             as_list[0] = 'Cases'
             total_result.index = as_list
-            st.write(total_result)
+            st.write(total_result[['Confirmed', 'Recovered', 'Deceased','Tested','Active']])
             st.markdown("### Today's Live Confirmed, Recovered & Deceased Cases in India")
             st.markdown("The tables give you the break up of all cases Today in India including Total Recovered, Deaths, Confirmed & Tested")
             yest = pd.to_datetime(india_states['Date'].max())
             t =datetime.strftime(yest - timedelta(1), '%Y-%m-%d')
-            yesterday_data = (india_states[['Confirmed', 'Recovered', 'Deceased']].loc[(india_states['Date'] == t) & (india_states['State'] == 'India') ])
-            today_stats = total_result - yesterday_data.values
+            yesterday_data = (india_states.loc[(india_states['Date'] == t) & (india_states['State'] == 'India') ])
+            yesterday_data['Active'] = yesterday_data['Confirmed'] - yesterday_data['Recovered'] - yesterday_data['Deceased'] - yesterday_data['Other']
+            today_stats = total_result[['Confirmed', 'Recovered', 'Deceased','Tested','Active']] - yesterday_data[['Confirmed', 'Recovered', 'Deceased','Tested', 'Active']].values
             today_stats.columns.name = 'Status'
             as_list = today_stats.index.to_list()
             as_list[0] = 'Cases'
             today_stats.index = as_list
-            st.write(today_stats)
+            st.write(today_stats[['Confirmed', 'Recovered', 'Deceased']])
             daily_graph = st.checkbox("Show Graph", False, key = 4)
             if daily_graph is True:
                 overall_viz = st.selectbox("Choose a type of visualization: ", ['Bar Chart', 'Line Chart'])
                 if overall_viz == 'Bar Chart':
-                    stack_bar(total_result, today_stats)
+                    stack_bar(total_result[['Confirmed', 'Recovered', 'Deceased']], today_stats[['Confirmed', 'Recovered', 'Deceased']])
                 else:
-                    plot_multiple_scatter(total_result, today_stats)
+                    plot_multiple_scatter(total_result[['Confirmed', 'Recovered', 'Deceased']], today_stats[['Confirmed', 'Recovered', 'Deceased']])
+            # pie(total_result)
 
             st.markdown("### Covid 19 Live State wise breakup")
             st.markdown("The following table gives you a real-time analysis of the confirmed, recovered and deceased cases of each Indian state")
@@ -216,43 +238,69 @@ if live_data_chxbox is True:
             BlankIndex = ['']*len(india_state_data)
             india_state_data.index = BlankIndex
             st.write(india_state_data[['State','Confirmed','Recovered','Deceased','Tested']])
-            st.markdown("---")
-            st.sidebar.markdown("---")
-            india_timeline = india_timeline_data()
-            timeline_state_chart(india_timeline[['Date','Daily Confirmed', 'Daily Recovered', 'Daily Deceased']])
 
+            st.markdown("### Mortality Rate, Recovery Rate & Active Cases Rate in India")
+            st.markdown("Below Pie Chart gives the comprehensive illustration of India's recovery, active and mortality percentage rate.")
+            pie(total_result[['Confirmed', 'Recovered', 'Deceased','Active']])
+
+            st.sidebar.markdown("---")
+
+            st.markdown("### Timeline of Covid-19 in India")
+            st.markdown("Below is the time line of overall and daily cases of covid in india since the first case that occurred in Januray. Toggle between Daily and overall timeline to get the graphical representation of the virus spread!")
+            timeline_selectbox = st.selectbox("Show Timeline Graph for: ", ['Overall Cases', 'Daily Cases'])
+            india_timeline = india_timeline_data()
+            if timeline_selectbox is 'Overall Cases':
+                timeline_state_chart(india_timeline[['Date','Total Confirmed', 'Total Recovered', 'Total Deceased']])
+            else:
+                timeline_state_chart(india_timeline[['Date','Daily Confirmed', 'Daily Recovered', 'Daily Deceased']])
+            st.markdown("---")
+        
         statewise = st.sidebar.checkbox("Show State Wise Analysis", False)
         if statewise is True:
             state = st.sidebar.selectbox("Select a State or Union Teritory:", india_states.State.unique()[india_states.State.unique() != 'India'])
             st.markdown("## **State Wise Analysis**")
             st.markdown("### Overall Confirmed, Recovered and Deceased Live Cases in "+state+" yet")
             st.markdown("This table gives the total Confirmed, Deceased & Recovered cases in "+state+". Please hit on the below checkbox to see the graphical representation of the same.")
-            state_total = india_states[['Confirmed', 'Recovered', 'Deceased']].loc[(india_states.State == state) & (india_states.Date == india_states.Date.max())]
+            state_total = india_states.loc[(india_states.State == state) & (india_states.Date == india_states.Date.max())]
+            # [['Confirmed', 'Recovered', 'Deceased']]
+            state_total['Active'] = state_total['Confirmed'] - state_total['Recovered'] - state_total['Deceased'] - state_total['Other']
             state_total.columns.name = 'Status'
             as_list = state_total.index.to_list()
             as_list[0] = 'Cases'
             state_total.index = as_list
-            st.write(state_total)
+            st.write(state_total[['Confirmed', 'Recovered', 'Deceased','Tested','Active']])
             yest = pd.to_datetime(india_states['Date'].max())
             t =datetime.strftime(yest - timedelta(1), '%Y-%m-%d')
-            state_yesterday_data = (india_states[['Confirmed', 'Recovered', 'Deceased']].loc[(india_states['Date'] == t) & (india_states['State'] == state) ])
-            today_state_stats = state_total - state_yesterday_data.values
+            state_yesterday_data = (india_states.loc[(india_states['Date'] == t) & (india_states['State'] == state) ])
+            state_yesterday_data['Active'] = state_yesterday_data['Confirmed'] - state_yesterday_data['Recovered'] - state_yesterday_data['Deceased'] - state_yesterday_data['Other']
+            today_state_stats = state_total[['Confirmed', 'Recovered', 'Deceased','Tested','Active']] - state_yesterday_data[['Confirmed', 'Recovered', 'Deceased','Tested','Active']].values
             today_state_stats.columns.name = 'Status'
             as_list = today_state_stats.index.to_list()
             as_list[0] = 'Cases'
             today_state_stats.index = as_list
-            st.write(today_state_stats)
+            st.markdown("### Today's Live Confirmed, Recovered & Deceased Cases in "+state)
+            st.markdown("The tables give you the break up of all cases Today in "+state+" including Total Recovered, Deaths, Confirmed & Tested. Please click on the checkbox to see the graphical representation of total and daily case breakup in "+state+".")
+            st.write(today_state_stats[['Confirmed', 'Recovered', 'Deceased']])
             total_graph = st.checkbox("Show Graph", False, key = 5)
             if total_graph is True:
                 state_viz_selection = st.selectbox("Choose a type of visualization: ", ['Bar Chart', 'Line Chart'], key = 6)
                 if state_viz_selection == 'Bar Chart':
-                   stack_bar(state_total, today_state_stats)
+                   stack_bar(state_total[['Confirmed', 'Recovered', 'Deceased']], today_state_stats[['Confirmed', 'Recovered', 'Deceased']])
                 else:
-                    plot_multiple_scatter(state_total, today_state_stats)
+                    plot_multiple_scatter(state_total[['Confirmed', 'Recovered', 'Deceased']], today_state_stats[['Confirmed', 'Recovered', 'Deceased']])
 
             st.markdown("### Overall Timeline of Covid Cases in "+state+" till date")
             st.markdown("This table gives you an understanding about the data analysis pertaining to the confirmed, recovered and deceased cases of Covid-19 in "+state+" over time.")
-            timeline_state_chart(india_states[['Date','Confirmed', 'Recovered', 'Deceased']].loc[(india_states['State'] == state)])   
+            state_timeline = state_timeline_data()
+            state_timeline_chxbox = st.selectbox("Show Timeline Graph for: ", ['Overall Cases', 'Daily Cases'], key = 7)
+            if state_timeline_chxbox is "Overall Cases":
+                timeline_state_chart(india_states[['Date','Confirmed', 'Recovered', 'Deceased']].loc[(india_states['State'] == state)])   
+            else:
+                state_daily_timeline(state_timeline[['Date','Status',state_codes[state]]])
+            
+            st.markdown("### Mortality Rate, Recovery Rate & Active Cases Rate in "+state+".")
+            st.markdown("Below Pie Chart gives the comprehensive illustration of "+state+"'s recovery, active and mortality percentage rate.")
+            pie(state_total[['Confirmed', 'Recovered', 'Deceased','Active']])
         # st.sidebar.markdown("---")
 
 

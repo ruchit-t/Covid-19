@@ -12,7 +12,20 @@ def global_data():
     return global_data
 
 
-
+def hist(data):
+    # fig  = make_subplots(rows=3, cols=1)
+    # fig = go.Figure()
+    fig = px.histogram(data, x = "Date", histfunc= "sum")
+    # bins = [data.Date.loc[data.index[i]] for i in range(data.index[0], data.index[-1], 10)]
+    # trace1 = go.Histogram(histfunc = "sum",y = data[data.columns[1]], x = data.Date, name = 'Confirmed Cases')
+    # trace2 = go.Histogram(histfunc = "sum", y = data[data.columns[2]], x = data[data.columns[0]], name = 'Recovered Cases')
+    # trace3 = go.Histogram(histfunc = "sum", y = data[data.columns[3]], x = data[data.columns[0]], name = 'Deceased Cases')
+    # fig.append_trace(trace1,1,1)
+    # fig.append_trace(trace2,2,1)
+    # fig.append_trace(trace3,3,1)
+    # fig.update_layout(width = 600)
+    # fig.add_trace(trace1)
+    st.write(fig)
 
                 # st.bar_chart(total_result[['Confirmed', 'Recovered', 'Deceased']].transpose())
                 # fig = px.bar(total_result.transpose(), x = 'Cases', y = total_result.transpose().index , color = 'Cases',
