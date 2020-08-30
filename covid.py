@@ -137,6 +137,24 @@ def pie(data):
     fig = px.pie(data[['Recovered','Deceased','Active']], names = data.loc[data.index.max()].index[1:], values=data[['Recovered','Deceased', 'Active']].loc[data.index.max()].values, title= "Pie Chart Break Up of Recovered, Active and Deceased Covid Cases",labels={'label':'Case Status','value':'Number of Cases'})
     fig.update_traces(textinfo='percent+label')
     st.write(fig)
+
+
+def cal_total_daily_data(data):
+    data['Active'] = data['Confirmed'] - data['Recovered'] - data['Deceased'] - data['Other']
+    data.columns.name = 'Status'
+    as_list = data.index.to_list()
+    as_list[0] = 'Cases'
+    data.index = as_list
+    return data
+
+def district_timeline(data, var1 = None):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x = data[data.columns[0]], y = data[data.columns[1]], mode = 'markers', text = "Confirmed Cases", name = 'Confirmed Cases'))
+    fig.add_trace(go.Scatter(x = data[data.columns[0]], y = data[data.columns[2]], mode = 'markers', text = "Recovered Cases", name = 'Recovered Cases'))
+    fig.add_trace(go.Scatter(x = data[data.columns[0]], y = data[data.columns[3]], mode = 'markers', text = "Deceased Cases", name = 'Confirmed Cases'))
+    fig.update_layout(title_text="District wise Covid-19 Cases in "+var1, xaxis_title = 'Districts', yaxis_title = 'Cases', xaxis = dict(showgrid =  False), yaxis = dict(showgrid = False))
+    st.write(fig)
+
 # entire_data = load_data()
 
 state_codes = {
@@ -147,8 +165,7 @@ state_codes = {
     'Bihar':'BR',
     'Chandigarh':'CH',
     'Chhattisgarh':'CT',
-    'Dadra and Nagar Haveli':'DN',
-    'Daman and Diu':'DD',
+    'Dadra and Nagar Haveli and Daman and Diu':'DN',
     'Delhi':'DL',
     'Goa':'GA',
     'Gujarat':'GJ',
@@ -189,14 +206,15 @@ st.markdown("For better experience on mobile, please use desktop site.",unsafe_a
 st.markdown("---")
 
 st.sidebar.title("Tune the following parameters to analyze the Covid-19 situation!")
-
-live_data_chxbox = st.sidebar.checkbox("Show Live Data", True, key = 1)
-
-st.sidebar.markdown("This option is currently available for only few countries")
+# st.sidebar.markdown("---")
+st.sidebar.markdown("<b>Note</b>: Live stats are currently available for India only (Refreshes in every 1 hour).", unsafe_allow_html = True)
+st.sidebar.markdown("Click on <b>Worldwide</b> to see stats for all the countries, provinces & cities. (Refreshes at IST 11 AM everyday)", unsafe_allow_html=True)
+st.sidebar.markdown("---")
+live_data_chxbox = st.sidebar.checkbox("Show Covid-19 Data", True, key = 1)
 
 if live_data_chxbox is True:
-    live_country = st.sidebar.selectbox("Select a Country: ", ['Worldwide', 'India', 'United States of America'])
-    if live_country == 'India':
+    live_country = st.sidebar.selectbox("Select a Country: ", ['Worldwide', 'India (Live Data)'])
+    if live_country == 'India (Live Data)':
         india_states = live_india_states()  
         nation_wise = st.sidebar.checkbox("Show Nation wide Analysis", True)
         st.sidebar.markdown("Set the states & other parameters below to get customized results")
@@ -205,24 +223,18 @@ if live_data_chxbox is True:
             st.markdown("### Overall Live Cases in India yet")
             st.markdown("The tables give you the break up of all cases in India yet including Total Recovered, Deaths, Confirmed & Tested")
             total_result = (india_states.loc[(india_states['Date'] == india_states['Date'].max()) & (india_states['State'] == 'India') ])
-            total_result['Active'] = total_result['Confirmed'] - total_result['Recovered'] - total_result['Deceased'] - total_result['Other']
-            total_result.columns.name = 'Status'
-            as_list = total_result.index.to_list()
-            as_list[0] = 'Cases'
-            total_result.index = as_list
-            st.write(total_result[['Confirmed', 'Recovered', 'Deceased','Tested','Active']])
+
+            total_modified_result = cal_total_daily_data(total_result)
+            st.write(total_modified_result[['Confirmed', 'Recovered', 'Deceased','Tested','Active']])
             st.markdown("### Today's Live Confirmed, Recovered & Deceased Cases in India")
             st.markdown("The tables give you the break up of all cases Today in India including Total Recovered, Deaths, Confirmed & Tested")
             yest = pd.to_datetime(india_states['Date'].max())
             t =datetime.strftime(yest - timedelta(1), '%Y-%m-%d')
             yesterday_data = (india_states.loc[(india_states['Date'] == t) & (india_states['State'] == 'India') ])
-            yesterday_data['Active'] = yesterday_data['Confirmed'] - yesterday_data['Recovered'] - yesterday_data['Deceased'] - yesterday_data['Other']
-            today_stats = total_result[['Confirmed', 'Recovered', 'Deceased','Tested','Active']] - yesterday_data[['Confirmed', 'Recovered', 'Deceased','Tested', 'Active']].values
-            today_stats.columns.name = 'Status'
-            as_list = today_stats.index.to_list()
-            as_list[0] = 'Cases'
-            today_stats.index = as_list
-            st.write(today_stats[['Confirmed', 'Recovered', 'Deceased']])
+            yesterday_modified_data = cal_total_daily_data(yesterday_data)
+            # yesterday_data['Active'] = yesterday_data['Confirmed'] - yesterday_data['Recovered'] - yesterday_data['Deceased'] - yesterday_data['Other']
+            today_stats = total_modified_result[['Confirmed', 'Recovered', 'Deceased','Tested','Active']] - yesterday_modified_data[['Confirmed', 'Recovered', 'Deceased','Tested', 'Active']].values
+            st.write(today_stats[['Confirmed', 'Recovered', 'Deceased','Active']])
             daily_graph = st.checkbox("Show Graph", False, key = 4)
             if daily_graph is True:
                 overall_viz = st.selectbox("Choose a type of visualization: ", ['Bar Chart', 'Line Chart'])
@@ -230,7 +242,7 @@ if live_data_chxbox is True:
                     stack_bar(total_result[['Confirmed', 'Recovered', 'Deceased']], today_stats[['Confirmed', 'Recovered', 'Deceased']])
                 else:
                     plot_multiple_scatter(total_result[['Confirmed', 'Recovered', 'Deceased']], today_stats[['Confirmed', 'Recovered', 'Deceased']])
-            # pie(total_result)
+            
 
             st.markdown("### Covid 19 Live State wise breakup")
             st.markdown("The following table gives you a real-time analysis of the confirmed, recovered and deceased cases of each Indian state")
@@ -241,7 +253,7 @@ if live_data_chxbox is True:
 
             st.markdown("### Mortality Rate, Recovery Rate & Active Cases Rate in India")
             st.markdown("Below Pie Chart gives the comprehensive illustration of India's recovery, active and mortality percentage rate.")
-            pie(total_result[['Confirmed', 'Recovered', 'Deceased','Active']])
+            pie(total_modified_result[['Confirmed', 'Recovered', 'Deceased','Active']])
 
             st.sidebar.markdown("---")
 
@@ -255,6 +267,8 @@ if live_data_chxbox is True:
                 timeline_state_chart(india_timeline[['Date','Daily Confirmed', 'Daily Recovered', 'Daily Deceased']])
             st.markdown("---")
         
+        # st.sidebar.markdown("---")
+        st.sidebar.markdown("## **State Level Analysis**")
         statewise = st.sidebar.checkbox("Show State Wise Analysis", False)
         if statewise is True:
             state = st.sidebar.selectbox("Select a State or Union Teritory:", india_states.State.unique()[india_states.State.unique() != 'India'])
@@ -262,22 +276,15 @@ if live_data_chxbox is True:
             st.markdown("### Overall Confirmed, Recovered and Deceased Live Cases in "+state+" yet")
             st.markdown("This table gives the total Confirmed, Deceased & Recovered cases in "+state+". Please hit on the below checkbox to see the graphical representation of the same.")
             state_total = india_states.loc[(india_states.State == state) & (india_states.Date == india_states.Date.max())]
-            # [['Confirmed', 'Recovered', 'Deceased']]
-            state_total['Active'] = state_total['Confirmed'] - state_total['Recovered'] - state_total['Deceased'] - state_total['Other']
-            state_total.columns.name = 'Status'
-            as_list = state_total.index.to_list()
-            as_list[0] = 'Cases'
-            state_total.index = as_list
-            st.write(state_total[['Confirmed', 'Recovered', 'Deceased','Tested','Active']])
+            state_modified_total = cal_total_daily_data(state_total)
+            st.write(state_modified_total[['Confirmed', 'Recovered', 'Deceased','Tested','Active']])
             yest = pd.to_datetime(india_states['Date'].max())
             t =datetime.strftime(yest - timedelta(1), '%Y-%m-%d')
             state_yesterday_data = (india_states.loc[(india_states['Date'] == t) & (india_states['State'] == state) ])
-            state_yesterday_data['Active'] = state_yesterday_data['Confirmed'] - state_yesterday_data['Recovered'] - state_yesterday_data['Deceased'] - state_yesterday_data['Other']
-            today_state_stats = state_total[['Confirmed', 'Recovered', 'Deceased','Tested','Active']] - state_yesterday_data[['Confirmed', 'Recovered', 'Deceased','Tested','Active']].values
-            today_state_stats.columns.name = 'Status'
-            as_list = today_state_stats.index.to_list()
-            as_list[0] = 'Cases'
-            today_state_stats.index = as_list
+            state_yesterday_modified_data = cal_total_daily_data(state_yesterday_data)
+            # state_yesterday_data['Active'] = state_yesterday_data['Confirmed'] - state_yesterday_data['Recovered'] - state_yesterday_data['Deceased'] - state_yesterday_data['Other']
+            today_state_stats = state_modified_total[['Confirmed', 'Recovered', 'Deceased','Tested','Active']] - state_yesterday_modified_data[['Confirmed', 'Recovered', 'Deceased','Tested','Active']].values
+
             st.markdown("### Today's Live Confirmed, Recovered & Deceased Cases in "+state)
             st.markdown("The tables give you the break up of all cases Today in "+state+" including Total Recovered, Deaths, Confirmed & Tested. Please click on the checkbox to see the graphical representation of total and daily case breakup in "+state+".")
             st.write(today_state_stats[['Confirmed', 'Recovered', 'Deceased']])
@@ -300,8 +307,76 @@ if live_data_chxbox is True:
             
             st.markdown("### Mortality Rate, Recovery Rate & Active Cases Rate in "+state+".")
             st.markdown("Below Pie Chart gives the comprehensive illustration of "+state+"'s recovery, active and mortality percentage rate.")
-            pie(state_total[['Confirmed', 'Recovered', 'Deceased','Active']])
-        # st.sidebar.markdown("---")
+            pie(state_modified_total[['Confirmed', 'Recovered', 'Deceased','Active']])
+            district_data =  live_india_disticts()
+            st.markdown("### Covid-19 cases district wise breakup in "+state)
+            st.markdown("The following table gives you a real-time analysis of the confirmed, recovered and deceased cases of "+state)
+            district_wise_breakup = district_data.loc[(district_data['Date'] == district_data['Date'].max()) & (district_data['State'] == state)]
+            BlankIndex = ['']*len(district_wise_breakup)
+            district_wise_breakup.index = BlankIndex
+            st.write(district_wise_breakup[['District','Confirmed','Recovered','Deceased','Tested']].fillna("Unknwon"))
+            district_timeline(district_wise_breakup[['District','Confirmed','Recovered','Deceased']],state)
+
+
+            st.sidebar.markdown("---")
+            st.markdown("---")
+            st.sidebar.markdown("## **District Level Analysis**")
+            districtwise = st.sidebar.checkbox("Show District wise analysis", True)
+            if districtwise is True:
+                district = st.sidebar.selectbox("Select a district of above selected state", district_data.District.loc[district_data['State'] == state].unique(),key = 10)
+                st.markdown("## **District Wise Analysis**")
+                st.markdown("### Overall Confirmed, Recovered and Deceased Live Cases in "+district+" yet")
+                st.markdown("This table gives the total Confirmed, Deceased & Recovered cases in "+district+". Table also gives the active cases and total tested indivisiual count in the district.")
+                district_total = district_data.loc[(district_data.District == district) & (district_data.Date == district_data.Date.max())]
+                district_modified_total = cal_total_daily_data(district_total)
+                st.write(district_modified_total[['Confirmed', 'Recovered', 'Deceased','Tested','Active']].fillna("Unknown"))
+                district_yesterday_data = (district_data.loc[(district_data['Date'] == t) & (district_data['District'] == district) ])
+                district_yesterday_modified_data = cal_total_daily_data(district_yesterday_data)
+                today_district_stats = district_modified_total[['Confirmed', 'Recovered', 'Deceased','Tested','Active']] - district_yesterday_modified_data[['Confirmed', 'Recovered', 'Deceased','Tested','Active']].values
+                st.markdown("### Today's Live Confirmed, Recovered & Deceased Cases in "+district)
+                st.markdown("The tables give you the break up of all cases Today in "+district+" including Total Recovered, Deaths, Confirmed & Tested. Don't forget to click on the checkbox to see the graphical representation of total and daily case breakup in "+district+".")
+                st.write(today_district_stats[['Confirmed', 'Recovered', 'Deceased']])
+                total_district_graph = st.checkbox("Show Graph")
+                if total_district_graph is True:
+                    district_viz_selection = st.selectbox("Choose a type of visualization: ", ['Bar Chart', 'Line Chart'], key = 11)
+                    if district_viz_selection == 'Bar Chart':
+                        stack_bar(district_modified_total[['Confirmed', 'Recovered', 'Deceased']], today_district_stats[['Confirmed', 'Recovered', 'Deceased']])
+                    else:
+                        plot_multiple_scatter(district_modified_total[['Confirmed', 'Recovered', 'Deceased']], today_district_stats[['Confirmed', 'Recovered', 'Deceased']])
+
+                st.markdown("### Overall Timeline of Covid Cases in "+district+" till date")
+                st.markdown("This visual representation gives you an understanding about the data analysis of the confirmed, recovered and deceased cases of Covid-19 in "+district+" over time.")
+                district_timeline_chxbox = st.checkbox("Show Timeline Graph for: ", True, key = 12)
+                if district_timeline_chxbox is True:
+                    timeline_state_chart(district_data[['Date','Confirmed', 'Recovered', 'Deceased']].loc[(district_data['District'] == district)])   
+
+                st.markdown("### Mortality Rate, Recovery Rate & Active Cases Rate in "+district+".")
+                st.markdown("Below Pie Chart gives the comprehensive illustration of "+district+"'s recovery, active and mortality percentage rate.")
+                pie(district_modified_total[['Confirmed', 'Recovered', 'Deceased','Active']])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # else:

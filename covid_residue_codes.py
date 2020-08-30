@@ -117,3 +117,14 @@ def hist(data):
 #                 'getFillColor': [248, 24, 148],
 #             }]
 #         )
+
+
+"""
+code of reindexing 
+            # total_result['Active'] = total_result['Confirmed'] - total_result['Recovered'] - total_result['Deceased'] - total_result['Other']
+            # total_result.columns.name = 'Status'
+            # as_list = total_result.index.to_list()
+            # as_list[0] = 'Cases'
+            # total_result.index = as_list
+"""
+
