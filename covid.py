@@ -12,64 +12,83 @@ import altair as alt
 from datetime import datetime, timedelta
 from plotly.subplots import make_subplots
 
-@st.cache(ttl = 3600, max_entries = 20)
+@st.cache(ttl = 60*1380)
 def load_data():
     data = pd.read_csv("https://raw.githubusercontent.com/microsoft/Bing-COVID-19-Data/master/data/Bing-COVID19-Data.csv")
-    data.rename(columns = {'Country_Region': 'Country','AdminRegion1': 'State', 'AdminRegion2':'City'}, inplace = True)
+    data.rename(columns = {'Updated':'Date', 'ConfirmedChange':'New Confirmed','Deaths':'Deceased','DeathsChange':'New Deceased','RecoveredChange':'New Recovered','Country_Region':'Country','AdminRegion1':'State','AdminRegion2':'District'}, inplace = True)
     return (data)
  
+@st.cache(ttl = 3600, max_entries = 100,allow_output_mutation=True)
+def worldwide_live_data():
+     w_d = rq.get("https://api.covid19api.com/summary").json()
+     data = pd.DataFrame(w_d['Global'], index = [0])
+     data.rename(columns={'NewConfirmed':'New Confirmed','TotalConfirmed':'Confirmed','NewDeaths':'New Deceased','TotalDeaths':'Deceased','NewRecovered':'New Recovered','TotalRecovered':'Recovered'},inplace=True)
+     return data
 
-@st.cache(ttl = 3600, max_entries = 20)
+@st.cache(ttl = 3600, max_entries = 100)
+def countries_live_data():
+     w_d = rq.get("https://api.covid19api.com/summary").json()
+     data = pd.DataFrame(w_d['Countries'])
+     data.rename(columns={'NewConfirmed':'New Confirmed','TotalConfirmed':'Confirmed','NewDeaths':'New Deceased','TotalDeaths':'Deceased','NewRecovered':'New Recovered','TotalRecovered':'Recovered'},inplace=True)
+     return data
+
+@st.cache(ttl = 3600, max_entries = 100)
 def country_data(entire_data, country):
     country_data = entire_data[entire_data['Country'] == country]
     return country_data
 
-@st.cache(ttl = 3600, max_entries = 20)
+@st.cache(ttl = 3600, max_entries = 100)
 def country_data_date(entire_data, country, din):
     country_data = entire_data.loc[(entire_data['Country'] == country) & (entire_data['Updated'] == din)]
     return country_data
 
-def show_map_worldwide(entire_data, din = None):
-    if din == None:
-        din = entire_data['Updated'].max()
-        wd = entire_data[entire_data['Updated'] == din]
-    else:
-        wd = entire_data[entire_data['Updated'] == din]
-    
+# @st.cache(suppress_st_warning=True)
+def show_map_worldwide(data, maxday,mapstyle):
+    mstyle = "white-b"
+    wd = data[data['Date'] == maxday]
     px.set_mapbox_access_token('pk.eyJ1IjoicnVjaGl0LXQiLCJhIjoiY2tkNmJ0bHR0MXFycjJ1bnR1YmI5ZDdiYSJ9.8oVDNbDpVDz2P8ZCdHnvlg')
-    fig = px.scatter_mapbox(wd, lat="Latitude", lon="Longitude", size="Confirmed", hover_name = np.where(wd["City"].isnull(),wd["Country"] + "- Unknown State",wd["City"]), hover_data =['Deaths', 'Recovered','Confirmed']
+    fig = px.scatter_mapbox(wd, lat="Latitude", lon="Longitude", size="Confirmed", hover_name = np.where(wd["District"].isnull(),wd["Country"] + "- Unknown State",wd["District"]), hover_data =['Deceased', 'Recovered','Confirmed']
                    ,color_discrete_sequence=["Red"], size_max=50, zoom=1)
-    fig.update_layout(
-    mapbox_style="white-bg",
-    mapbox_layers=[
-        {
-            "below": 'traces',
-            "sourcetype": "raster",
-            "source": [
-                "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}"
-            ]
-        }
-      ])
-    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+    if mstyle == "white-bg":
+        fig.update_layout(
+        mapbox_style="white-bg",
+        mapbox_layers=[
+            {
+                "below": 'traces',
+                "sourcetype": "raster",
+                "source": [
+                    "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}"
+                ]
+            }
+        ])
+    else:
+        fig.update_layout(
+            mapbox = {
+        'style': mapstyle, 'zoom': 0.7},
+        showlegend = True)
+    fig.update_layout( title = "Covid-19 Worldwide Effect")
+    # fig.update_layout(margin={"r":1.0,"t":0.0,"l":1.0,"b":0.0})
+    fig.update_layout(margin=dict(autoexpand = True))
     st.write(fig)
+    # fig.show()
 
 
-@st.cache(ttl = 60*5, max_entries = 20)
+@st.cache(ttl = 60*30, max_entries = 100)
 def live_india_states():
     iapi = pd.read_csv("https://api.covid19india.org/csv/latest/states.csv")
     return iapi
 
-@st.cache(ttl = 60*5, max_entries = 20)
+@st.cache(ttl = 60*30, max_entries = 100)
 def live_india_disticts():
     iapi = pd.read_csv("https://api.covid19india.org/csv/latest/districts.csv")
     return iapi
     
-@st.cache(ttl = 60*5, max_entries = 20)
+@st.cache(ttl = 60*30, max_entries = 100)
 def state_timeline_data():
     iapi = pd.read_csv("https://api.covid19india.org/csv/latest/state_wise_daily.csv")
     return iapi
 
-@st.cache(ttl = 60*5, max_entries = 20)
+@st.cache(ttl = 60*30, max_entries = 100)
 def india_timeline_data():
     iapi = pd.read_csv("https://api.covid19india.org/csv/latest/case_time_series.csv")
     return iapi
@@ -195,6 +214,12 @@ state_codes = {
     'West Bengal':'WB'
 }
 
+entire_data = load_data()
+t2 = pd.to_datetime(entire_data.Date.loc[entire_data['Country'] =='India'].max())
+maxday = datetime.strftime(t2-timedelta(1), '%m/%d/%Y')
+
+countries_data  = countries_live_data()
+
 st.markdown("<style>description {color: Green;}</style>",unsafe_allow_html = True)
 st.title("Covid-19 🌎 Tracker With Visual Analysis!")
 st.markdown("### *After the outbreak in late December 2019, Covid-19 also known as SARS-CoVid-19 or simply Corona Virus"
@@ -213,7 +238,7 @@ st.sidebar.markdown("---")
 live_data_chxbox = st.sidebar.checkbox("Show Covid-19 Data", True, key = 1)
 
 if live_data_chxbox is True:
-    live_country = st.sidebar.selectbox("Select a Country: ", ['Worldwide', 'India (Live Data)'])
+    live_country = st.sidebar.selectbox("Select a Country: ", ['Worldwide', 'India (Live Data)', 'Other Countries'])
     if live_country == 'India (Live Data)':
         india_states = live_india_states()  
         nation_wise = st.sidebar.checkbox("Show Nation wide Analysis", True)
@@ -354,16 +379,61 @@ if live_data_chxbox is True:
                 st.markdown("Below Pie Chart gives the comprehensive illustration of "+district+"'s recovery, active and mortality percentage rate.")
                 pie(district_modified_total[['Confirmed', 'Recovered', 'Deceased','Active']])
 
+    elif live_country == 'Worldwide':
+        st.markdown("## **Worldwide Analysis**")
+        st.markdown("### Overall Covid-19 cases around the globe yet.")
+        st.markdown("The below table gives the break down of total confirmed, deceased & recovered Covid-19 cases around the globe.")
+        world_data = worldwide_live_data()
+        # world_data.index.name = 'Cases'
+        world_data.columns.name = 'Status'
+        as_list = world_data.index.to_list()
+        as_list[0] = 'Cases'
+        world_data.index = as_list
+        st.write(world_data[['Confirmed','Recovered','Deceased']])
+        st.markdown("### Today's Covid-19 cases around the globe.")
+        st.markdown("The tables give you the break up of all cases Today including Total Recovered, Deaths & Confirmed. Don't forget to click on the checkbox to see the graphical representation of total and daily case breakup.")
+        st.write(world_data[['New Confirmed','New Recovered','New Deceased']])
+        daily_copy = world_data[['New Confirmed','New Recovered','New Deceased']].copy()
+        daily_copy.rename(columns= {'New Confirmed':'Confirmed','New Recovered':'Recovered','New Deceased':'Deceased'},inplace=True)
+        # daily_copy.index.name = 'Cases'
+        daily_graph = st.checkbox("Show Graph", False, key = 4)
+        if daily_graph is True:
+            overall_viz = st.selectbox("Choose a type of visualization: ", ['Bar Chart', 'Scatter Chart'])
+            if overall_viz == 'Bar Chart':
+                stack_bar(world_data[['Confirmed', 'Recovered', 'Deceased']], daily_copy[['Confirmed', 'Recovered', 'Deceased']])
+            else:
+                plot_multiple_scatter(world_data[['Confirmed', 'Recovered', 'Deceased']], daily_copy[['Confirmed', 'Recovered','Deceased']])
 
 
+        st.markdown("### Map representation of Covid-19 cases around the globe.")
+        st.markdown("Below map gives the overall insight of covid cases in the world. Hover over the cities and provinces to see confirmed, recovered and deceased cases in the particular area. Select a theme from list of options in the sidebar to see the data in your desired way!")
+        mapstyle = st.sidebar.radio("Select a theme of map: ",['Outdoors','Dark','Satellite-Streets'])
+        show_map_worldwide(entire_data, maxday,mapstyle.lower())
+        st.markdown("### Worldwide Fatality Rate, Recovery Rate & Active Cases Percentage.")
+        st.markdown("Below Pie Chart gives the comprehensive illustration of World's recovery, active and mortality percentage rate. Click on the right top side to expand the pie chart.")
+        world_data['Active'] = world_data['Confirmed'] - world_data['Deceased'] - world_data['Recovered']
+        pie(world_data[['Confirmed','Recovered','Deceased','Active']])
+
+        st.write("### Timeline of Covid-19.")
+        st.write("This visual representation gives you an understanding about the data analysis of the confirmed, recovered and deceased cases of Covid-19 in across the globe over time. Toggle between daily and overall analysis to see the desired graphical representation.")
+        world_timeline_data = entire_data.loc[(entire_data['Country'] == "Worldwide")&(entire_data['State'].isnull())&(entire_data['District'].isnull())&(entire_data['New Recovered']>=0.0)].copy()
+        world_timeline_data['Dates'] = pd.to_datetime(world_timeline_data['Date'])
+        world_timeline_data['Dates'] = world_timeline_data['Dates'].apply(lambda x:x.strftime("%d-%b-%Y"))
+        timeline_selectbox = st.selectbox("Show Timeline Graph for: ", ['Overall Cases', 'Daily Cases'],key =14)
+        if timeline_selectbox == "Overall Cases":
+            # st.write(timeline_state_chart(entire_data[['Date','Confirmed','Recovered','Deceased']].loc[(entire_data['Country'] == "Worldwide")&(entire_data['State'].isnull())&(entire_data['District'].isnull())]))
+            st.write(timeline_state_chart((world_timeline_data[['Dates','Confirmed','Recovered','Deceased']])))
+        else:
+            # st.write(timeline_state_chart(entire_data[['Date','New Confirmed','New Recovered','New Deceased']].loc[(entire_data['Country'] == "Worldwide")&(entire_data['State'].isnull())&(entire_data['District'].isnull())&(entire_data['New Recovered']>=0.0)]))
+            st.write(timeline_state_chart((world_timeline_data[['Dates','New Confirmed','New Recovered','New Deceased']])))
 
 
-
-
-
-
-
-
+        st.write("### Top 5 Countries with highest number of Covid-19 confirmed cases")
+        st.write("The following table represents the top 5 countries with highest number confirmed Covid-19 cases along with recovered and deceased cases.")
+        top5 = countries_data.nlargest(5,'Confirmed')
+        top5Index = np.arange(1,6)
+        top5.index = top5Index
+        st.write(top5[['Country','Confirmed','Recovered','Deceased','New Confirmed','New Recovered','New Deceased']])
 
 
 
