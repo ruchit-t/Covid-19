@@ -3,14 +3,15 @@ import os
 import json 
 import requests as rq
 import streamlit as st
-import pydeck as pdk
 import time
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-import altair as alt
 from datetime import datetime, timedelta
-from plotly.subplots import make_subplots
+# from plotly.subplots import make_subplots
+# import altair as alt
+# import pydeck as pdk
+
 
 @st.cache(ttl = 60*1380)
 def load_data():
@@ -196,8 +197,6 @@ def district_timeline(data, var1 = None):
     fig.update_layout(title_text="District wise Covid-19 Cases in "+var1, xaxis_title = 'Districts', yaxis_title = 'Cases', xaxis = dict(showgrid =  False), yaxis = dict(showgrid = False))
     st.write(fig)
 
-# entire_data = load_data()
-
 state_codes = {
     'Andaman and Nicobar Islands':'AN',
     'Andhra Pradesh	': 'AP',
@@ -247,9 +246,9 @@ st.markdown("### *Through close cooperation and collaboration with developers, g
 st.markdown("After the outbreak in late December 2019, Covid-19 also known as SARS-CoVid-19 or simply Corona Virus"
 + " has affected the world in the most unimaginable way.</br >The objective of this website is to provide the most accurate Covid-19 data and to analyze it with map, bar and other graphical reprsentations.", unsafe_allow_html = True)
 # st.markdown("<b>Note</b>: Data is collected from multiple sources that update at different times and may not always align. Some regions may not provide complete breakdown of COVID-19 related stats.", unsafe_allow_html = True)
-st.markdown("For better experience on mobile, please use desktop site.",unsafe_allow_html = True)
+st.markdown("<b>Note</b>:For better experience on mobile, please use desktop site.",unsafe_allow_html = True)
 st.markdown("---")
-st.sidebar.title("Tune the following parameters to analyze the Covid-19 situation!")
+st.sidebar.title("Tune the following parameters to analyze Covid-19 situation!")
 
 # st.sidebar.markdown("---")
 
@@ -257,7 +256,7 @@ st.sidebar.markdown("---")
 live_data_chxbox = st.sidebar.checkbox("Show Covid-19 Data", True, key = 1)
 
 if live_data_chxbox is True:
-    live_country = st.sidebar.selectbox("Select a Country: ", ['India','Worldwide','Other Countries'])
+    live_country = st.sidebar.selectbox("Select an option: ", ['India','Worldwide','Other Countries'])
     if live_country == 'India':
         india_states = live_india_states()  
         nation_wise = st.sidebar.checkbox("Show Nation wide Analysis", True)
@@ -516,38 +515,6 @@ if live_data_chxbox is True:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-# else:
-#     choice_country = st.sidebar.checkbox("Show Country Wise Ananlysis", True)
-
-#     st.sidebar.markdown("Set the state, city & other parameters to get the desired analysis.")
-
-#     if (choice_country is True):
-#         country = st.sidebar.selectbox("Select a Country:", entire_data.Country.unique()[1:])
-#         covid_country_data = country_data(entire_data, country)
-#         st.markdown("# **National Level Analysis**")
-#         st.markdown("## Overall Confirmed, Active, Recovered and Deceased cases in "+ country +" yet")
-#         st.markdown("### *This table gives you the data break-up of all confirmed, recovered, active and deceased cases that has been reported in "+ country+ " till now. The graphical representation of this tabular data insight is given right below, don’t forget to check it out.*")
-#         t = covid_country_data[['Confirmed', 'Deaths', 'Recovered']].loc[(covid_country_data['Updated'] == covid_country_data['Updated'].max()) & (covid_country_data['State'].isnull()) & (covid_country_data['City'].isnull())]
-#         st.write(t)
-#     # , t.rename(index = {t.index: 'Cases'})
-
-# elif (choice_result == 'Worldwide'):
-#     # covid_world_data = country_data(entire_data, 'Worldwide')
-#     show_map_worldwide(entire_data)
-#     overall = st.sidebar.checkbox("Show Overall Analysis", True, key = 1)
-#     if overall is True:
 
 
 
