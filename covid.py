@@ -239,7 +239,7 @@ state_codes = {
 
 countries_data  = countries_live_data()
 
-st.beta_set_page_title("Covid-19 Dashboard & Tracker")
+# st.beta_set_page_title("Covid-19 Dashboard & Tracker")
 
 st.markdown("<style>description {color: Green;}</style>",unsafe_allow_html = True)
 st.title("Covid-19 🌎 Tracker With Dashboard!")
