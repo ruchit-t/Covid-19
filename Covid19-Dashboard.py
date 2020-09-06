@@ -193,7 +193,7 @@ def district_timeline(data, var1 = None):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x = data[data.columns[0]], y = data[data.columns[1]], mode = 'markers', text = "Confirmed Cases", name = 'Confirmed Cases'))
     fig.add_trace(go.Scatter(x = data[data.columns[0]], y = data[data.columns[2]], mode = 'markers', text = "Recovered Cases", name = 'Recovered Cases'))
-    fig.add_trace(go.Scatter(x = data[data.columns[0]], y = data[data.columns[3]], mode = 'markers', text = "Deceased Cases", name = 'Confirmed Cases'))
+    fig.add_trace(go.Scatter(x = data[data.columns[0]], y = data[data.columns[3]], mode = 'markers', text = "Deceased Cases", name = 'Deceased Cases'))
     fig.update_layout(title_text="District wise Covid-19 Cases in "+var1, xaxis_title = 'Districts', yaxis_title = 'Cases', xaxis = dict(showgrid =  False), yaxis = dict(showgrid = False))
     st.write(fig)
 
