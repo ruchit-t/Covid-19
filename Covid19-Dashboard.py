@@ -263,16 +263,16 @@ if live_data_chxbox is True:
         st.sidebar.markdown("Set the states & other parameters below to get customized results")
         if nation_wise is True:
             st.markdown("## **Nation Wide Analysis**")
-            st.markdown("This section describes the impact of Covid-19 in India. This part gives you the real-time impact analysis of confirmed, active, recovered, and deceased cases of Covid-19 on National, State, and District-level basis.")
+            st.markdown("This section describes the impact of Covid-19 in India. This part gives you the real-time analysis of confirmed, active, recovered, and deceased cases of Covid-19 at National, State and District-level.")
             st.markdown("### Overall Live Cases in India yet")
-            st.markdown("The tables give you the total count of confirmed, recovered, deceased & active cases that has been reported in India till now. This table also gives the total count of Covid-19 testings in India till now.")
+            st.markdown("The table gives you the total count of confirmed, recovered, deceased & active cases that has been reported in India till now. It also gives the total count of Covid-19 testings in India till now.")
             total_result = (india_states.loc[(india_states['Date'] == india_states['Date'].max()) & (india_states['State'] == 'India') ])
 
             total_modified_result = cal_total_daily_data(total_result)
             st.write(total_modified_result[['Confirmed', 'Recovered', 'Deceased','Tested','Active']])
             st.markdown("### Today's Live Confirmed, Recovered & Deceased Cases in India")
             # st.markdown("The tables give you the break up of all cases Today in India including Total Recovered, Deaths, Confirmed & Tested")
-            st.markdown("This table gives you an insights of the confirmed, recovered and deceased cases of Covid-19 in India today. The graphical representation of this tabular data is given right below. Please hit on <b> Show Graph </b> to see the grphical representation of overall and today's data.", unsafe_allow_html= True)
+            st.markdown("This table gives you an insight of confirmed, recovered and deceased cases of Covid-19 in India today. The graphical representation of this tabular data is given right below. Please hit on <b> Show Graph </b> to see the grphical representation of overall and today's data.", unsafe_allow_html= True)
             yest = pd.to_datetime(india_states['Date'].max())
             t =datetime.strftime(yest - timedelta(1), '%Y-%m-%d')
             yesterday_data = (india_states.loc[(india_states['Date'] == t) & (india_states['State'] == 'India') ])
@@ -290,20 +290,20 @@ if live_data_chxbox is True:
             
 
             st.markdown("### Covid 19 Live State wise breakup")
-            st.markdown("The following table gives you a real-time analysis of the confirmed, recovered and deceased cases of each Indian states. It also contains total head count of testings done in each states till now. ")
+            st.markdown("The following table gives you a real-time analysis of the confirmed, recovered and deceased cases in each Indian state. It also contains total head count of testings done in all the states till now. ")
             india_state_data = india_states.loc[(india_states['Date'] == india_states['Date'].max())]
             BlankIndex = ['']*len(india_state_data)
             india_state_data.index = BlankIndex
             st.write(india_state_data[['State','Confirmed','Recovered','Deceased','Tested']])
 
             st.markdown("### Fatality Rate, Recovery Rate & Active Cases Rate in India")
-            st.markdown("The Pie Chart gives the comprehensive illustration of India's recovered, active and fatality percentage rate till now.")
+            st.markdown("The Pie Chart gives the comprehensive illustration of India's recovered, active and fatality percentage rate.")
             pie(total_modified_result[['Confirmed', 'Recovered', 'Deceased','Active']])
 
             st.sidebar.markdown("---")
 
             st.markdown("### Timeline of Covid-19 in India")
-            st.markdown("The line chart gives an understanding of the time line of overall and daily Covid-19 cases in India since the first reported case. Toggle between Daily and overall timeline to get the graphical representation of the virus spread!")
+            st.markdown("The line chart represents timeline of overall and daily Covid-19 cases in India since the first reported case. Toggle between Daily and overall timeline to get the graphical representation of the virus spread!")
             timeline_selectbox = st.selectbox("Show Timeline Graph for: ", ['Overall Cases', 'Daily Cases'])
             india_timeline = india_timeline_data()
             if timeline_selectbox == 'Overall Cases':
@@ -320,7 +320,7 @@ if live_data_chxbox is True:
             st.markdown("---")
             st.markdown("## **State wide Analysis**")
             st.markdown("### Overall Confirmed, Recovered and Deceased Live Cases in "+state+" yet")
-            st.markdown("The table give you the total count of confirmed, recovered, deceased cases that has been reported in "+state+" till now. This table also gives the total count of Covid-19 testings in "+state+"till now.")
+            st.markdown("The table gives you the total count of confirmed, recovered, deceased cases that has been reported in "+state+" till now. It also gives the total count of Covid-19 testings in "+state+"till now.")
             state_total = india_states.loc[(india_states.State == state) & (india_states.Date == india_states.Date.max())]
             state_modified_total = cal_total_daily_data(state_total)
             st.write(state_modified_total[['Confirmed', 'Recovered', 'Deceased','Tested','Active']])
@@ -332,7 +332,7 @@ if live_data_chxbox is True:
             today_state_stats = state_modified_total[['Confirmed', 'Recovered', 'Deceased','Tested','Active']] - state_yesterday_modified_data[['Confirmed', 'Recovered', 'Deceased','Tested','Active']].values
 
             st.markdown("### Today's Live Confirmed, Recovered & Deceased Cases in "+state)
-            st.markdown("This table gives you an insights of the confirmed, recovered and deceased cases of Covid-19 in "+state+" today. The graphical representation of this tabular data is given right below. Please hit on <b> Show Graph </b> to see the grphical representation of overall and today's data.", unsafe_allow_html= True)
+            st.markdown("This table gives you an insight of the confirmed, recovered and deceased cases of Covid-19 in "+state+" today. The graphical representation of this tabular data is given right below. Please hit on <b> Show Graph </b> to see the grphical representation of overall and today's data.", unsafe_allow_html= True)
             st.write(today_state_stats[['Confirmed', 'Recovered', 'Deceased']])
             total_graph = st.checkbox("Show Graph", False, key = 5)
             if total_graph is True:
@@ -343,7 +343,7 @@ if live_data_chxbox is True:
                     plot_multiple_scatter(state_total[['Confirmed', 'Recovered', 'Deceased']], today_state_stats[['Confirmed', 'Recovered', 'Deceased']])
 
             st.markdown("### Overall Timeline of Covid Cases in "+state+" till date")
-            st.markdown("The line chart gives an understanding of the time line of overall and daily Covid-19 cases in "+state+" since the first reported case. Toggle between Daily and overall timeline to see the graphical representation of the virus spread!")
+            st.markdown("The line chart represents timeline of overall and daily Covid-19 cases in "+state+" since the first reported case. Toggle between Daily and overall timeline to see the graphical representation of the virus spread!")
             state_timeline = state_timeline_data()
             state_timeline_chxbox = st.selectbox("Show Timeline Graph for: ", ['Overall Cases', 'Daily Cases'], key = 7)
             if state_timeline_chxbox == "Overall Cases":
@@ -372,7 +372,7 @@ if live_data_chxbox is True:
                 district = st.sidebar.selectbox("Select a district of above selected state", district_data.District.loc[district_data['State'] == state].unique(),key = 10)
                 st.markdown("## **District Wise Analysis**")
                 st.markdown("### Overall Confirmed, Recovered and Deceased Live Cases in "+district+" yet")
-                st.markdown("The tables give you the total count of confirmed, recovered, deceased cases that has been reported in "+district+" till now. This table also gives the total count of Covid-19 testings in "+district+"till now.")
+                st.markdown("The table gives you the total count of confirmed, recovered, deceased cases that has been reported in "+district+" till now. It also gives the total count of Covid-19 testings in "+district+"till now.")
                 district_total = district_data.loc[(district_data.District == district) & (district_data.Date == district_data.Date.max())]
                 district_modified_total = cal_total_daily_data(district_total)
                 st.write(district_modified_total[['Confirmed', 'Recovered', 'Deceased','Tested','Active']].fillna("Unknown"))
@@ -380,7 +380,7 @@ if live_data_chxbox is True:
                 district_yesterday_modified_data = cal_total_daily_data(district_yesterday_data)
                 today_district_stats = district_modified_total[['Confirmed', 'Recovered', 'Deceased','Tested','Active']] - district_yesterday_modified_data[['Confirmed', 'Recovered', 'Deceased','Tested','Active']].values
                 st.markdown("### Today's Live Confirmed, Recovered & Deceased Cases in "+district)
-                st.markdown("This table gives you an insights of the confirmed, recovered and deceased cases of Covid-19 in "+district+" today. The graphical representation of this tabular data is given right below. Please hit on <b> Show Graph </b> to see the grphical representation of overall and today's data.", unsafe_allow_html= True)
+                st.markdown("This table gives you an insight of confirmed, recovered and deceased cases of Covid-19 in "+district+" today. The graphical representation of this tabular data is given right below. Please hit on <b> Show Graph </b> to see the grphical representation of overall and today's data.", unsafe_allow_html= True)
                 st.write(today_district_stats[['Confirmed', 'Recovered', 'Deceased']])
                 total_district_graph = st.checkbox("Show Graph")
                 if total_district_graph is True:
@@ -391,7 +391,7 @@ if live_data_chxbox is True:
                         plot_multiple_scatter(district_modified_total[['Confirmed', 'Recovered', 'Deceased']], today_district_stats[['Confirmed', 'Recovered', 'Deceased']])
 
                 st.markdown("### Overall Timeline of Covid Cases in "+district+" till date")
-                st.markdown("The line chart gives an understanding of the time line of overall Covid-19 cases in "+district+" since the first reported case.")
+                st.markdown("The line chart represents timeline of overall Covid-19 cases in "+district+" since the first reported case.")
                 district_timeline_chxbox = st.checkbox("Show Timeline Graph for: ", True, key = 12)
                 if district_timeline_chxbox is True:
                     timeline_state_chart(district_data[['Date','Confirmed', 'Recovered', 'Deceased']].loc[(district_data['District'] == district)])   
@@ -418,7 +418,7 @@ if live_data_chxbox is True:
         world_data.index = as_list
         st.write(world_data[['Confirmed','Recovered','Deceased']])
         st.markdown("### Today's Covid-19 cases around the globe.")
-        st.markdown("This table gives you an insights of the confirmed, recovered and deceased cases of Covid-19 around the globe today. The graphical representation of this tabular data is given right below. Please hit on <b> Show Graph </b> to see the grphical representation of overall and today's data.", unsafe_allow_html= True)
+        st.markdown("This table gives you an insight of the confirmed, recovered and deceased cases of Covid-19 around the globe today. The graphical representation of this tabular data is given right below. Please hit on <b> Show Graph </b> to see the grphical representation of overall and today's data.", unsafe_allow_html= True)
         st.write(world_data[['New Confirmed','New Recovered','New Deceased']])
         daily_copy = world_data[['New Confirmed','New Recovered','New Deceased']].copy()
         daily_copy.rename(columns= {'New Confirmed':'Confirmed','New Recovered':'Recovered','New Deceased':'Deceased'},inplace=True)
@@ -479,7 +479,7 @@ if live_data_chxbox is True:
         total_case.index = as_list
         st.write(total_case[['Confirmed','Recovered','Deceased']])
         st.markdown("### Today's Covid-19 cases in "+country+".")
-        st.markdown("This table gives you an insights of the confirmed, recovered and deceased cases of Covid-19 in "+country+" today. The graphical representation of this tabular data is given right below. Please hit on <b> Show Graph </b> to see the grphical representation of overall and today's data.", unsafe_allow_html= True)
+        st.markdown("This table gives you an insight of the confirmed, recovered and deceased cases of Covid-19 in "+country+" today. The graphical representation of this tabular data is given right below. Please hit on <b> Show Graph </b> to see the grphical representation of overall and today's data.", unsafe_allow_html= True)
         st.write(total_case[['New Confirmed','New Recovered','New Deceased']])
         country_copy = total_case[['New Confirmed','New Recovered','New Deceased']].copy()
         country_copy.rename(columns= {'New Confirmed':'Confirmed','New Recovered':'Recovered','New Deceased':'Deceased'},inplace=True)
@@ -496,7 +496,7 @@ if live_data_chxbox is True:
         total_case['Active'] = total_case['Confirmed'] - total_case['Deceased'] - total_case['Recovered']
         pie(total_case[['Confirmed','Recovered','Deceased','Active']])
         st.markdown("### Timeline of Covid-19 in "+country)
-        st.markdown("The line chart gives an understanding of the time line of overall and daily Covid-19 cases in "+country+" since the first reported case. Toggle between Daily and overall timeline to see the graphical representation of the virus spread!")
+        st.markdown("The line chart represents timeline of overall and daily Covid-19 cases in "+country+" since the first reported case. Toggle between Daily and overall timeline to see the graphical representation of the virus spread!")
         timeline_selectbox = st.selectbox("Show Timeline Graph for: ", ['Overall Cases', 'Daily Cases'])
         if timeline_selectbox == 'Overall Cases':
             country_timeline_chart(country_timeline[['Date','Total Confirmed','Total Deceased']].loc[(country_timeline['Country'] == country)])
