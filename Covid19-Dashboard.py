@@ -280,7 +280,7 @@ if live_data_chxbox is True:
             # yesterday_data['Active'] = yesterday_data['Confirmed'] - yesterday_data['Recovered'] - yesterday_data['Deceased'] - yesterday_data['Other']
             today_stats = total_modified_result[['Confirmed', 'Recovered', 'Deceased','Tested','Active']] - yesterday_modified_data[['Confirmed', 'Recovered', 'Deceased','Tested', 'Active']].values
             st.write(today_stats[['Confirmed', 'Recovered', 'Deceased','Active']])
-            daily_graph = st.checkbox("Show Graph", False, key = 4)
+            daily_graph = st.checkbox("Show Graph", True, key = 4)
             if daily_graph is True:
                 overall_viz = st.selectbox("Choose a type of visualization: ", ['Bar Chart', 'Line Chart'])
                 if overall_viz == 'Bar Chart':
@@ -334,7 +334,7 @@ if live_data_chxbox is True:
             st.markdown("### Today's Live Confirmed, Recovered & Deceased Cases in "+state)
             st.markdown("This table gives you an insight of the confirmed, recovered and deceased cases of Covid-19 in "+state+" today. The graphical representation of this tabular data is given right below. Please hit on <b> Show Graph </b> to see the grphical representation of overall and today's data.", unsafe_allow_html= True)
             st.write(today_state_stats[['Confirmed', 'Recovered', 'Deceased']])
-            total_graph = st.checkbox("Show Graph", False, key = 5)
+            total_graph = st.checkbox("Show Graph", True, key = 5)
             if total_graph is True:
                 state_viz_selection = st.selectbox("Choose a type of visualization: ", ['Bar Chart', 'Line Chart'], key = 6)
                 if state_viz_selection == 'Bar Chart':
@@ -382,7 +382,7 @@ if live_data_chxbox is True:
                 st.markdown("### Today's Live Confirmed, Recovered & Deceased Cases in "+district)
                 st.markdown("This table gives you an insight of confirmed, recovered and deceased cases of Covid-19 in "+district+" today. The graphical representation of this tabular data is given right below. Please hit on <b> Show Graph </b> to see the grphical representation of overall and today's data.", unsafe_allow_html= True)
                 st.write(today_district_stats[['Confirmed', 'Recovered', 'Deceased']])
-                total_district_graph = st.checkbox("Show Graph")
+                total_district_graph = st.checkbox("Show Graph",True, key=19)
                 if total_district_graph is True:
                     district_viz_selection = st.selectbox("Choose a type of visualization: ", ['Bar Chart', 'Line Chart'], key = 11)
                     if district_viz_selection == 'Bar Chart':
