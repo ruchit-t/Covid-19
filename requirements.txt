@@ -9,7 +9,7 @@ brotli==1.0.9
 cftime==1.6.2
 charset_normalizer==3.2.0
 chart_studio==1.1.0
-Cheetah==2.4.4
+# Cheetah==2.4.4
 cherrypy==18.8.0
 ConfigParser==6.0.0
 contextlib2==21.6.0
