@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 # import pydeck as pdk
 
 
-@st.cache(ttl = 600*1380, max_entries = 100, allow_output_mutation=True)
+@st.cache(ttl = 600*1380, max_entries = 100)
 def load_data():
     # data = pd.read_csv("https://raw.githubusercontent.com/microsoft/Bing-COVID-19-Data/master/data/Bing-COVID19-Data.csv")
     data = pd.read_csv("https://pandemicdatalake.blob.core.windows.net/public/curated/covid-19/bing_covid-19_data/latest/bing_covid-19_data.csv")
