@@ -16,5 +16,7 @@
 <h3> step 5: run it on local host: 'streamlit run Covid19-Dashboard.py' </h3>
 
 <h3>The Dashboard can be accessed via following link: </h3>
-<h2> https://covid19sars-8322cab4a1ed.herokuapp.com/ </h2>
-<h2> https://covid-19-nijkrqu8mske78ribfmcfj.streamlit.app/ </h2>
+<a href="https://covid19sars-8322cab4a1ed.herokuapp.com/">Heroku Link</a>
+<a href="https://covid-19-nijkrqu8mske78ribfmcfj.streamlit.app/">Streamlit Link</a>
+<!-- <h2> https://covid19sars-8322cab4a1ed.herokuapp.com/ </h2>
+<h2> https://covid-19-nijkrqu8mske78ribfmcfj.streamlit.app/ </h2> -->
